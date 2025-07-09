@@ -1,0 +1,287 @@
+{% extends 'analyzer/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- نوار پیشرفت -->
+            <div class="card mb-4 fade-in" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: none;">
+                <div class="card-header bg-info text-white" style="border-radius: 15px 15px 0 0;">
+                    <h3 class="mb-0" style="color: white !important;">پیشرفت ثبت اطلاعات</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="progress" style="height: 30px; border-radius: 15px;">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                            role="progressbar" style="width: 0%;" 
+                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    <div class="mt-4" id="progress-details">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <span id="subject_ریاضیات"><i class="fas fa-circle text-muted"></i> ریاضیات</span>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <span id="subject_فیزیک"><i class="fas fa-circle text-muted"></i> فیزیک</span>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <span id="subject_شیمی"><i class="fas fa-circle text-muted"></i> شیمی</span>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <span id="subject_زیست‌شناسی"><i class="fas fa-circle text-muted"></i> زیست‌شناسی</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- کارت ورود اطلاعات -->
+            <div class="card mb-4 fade-in" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: none;">
+                <div class="card-header bg-primary text-white" style="border-radius: 15px 15px 0 0;">
+                   <h3 class="mb-0" style="color: white !important;">ورود اطلاعات آزمون</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">انتخاب درس:</label>
+                        <select class="form-select" id="subject">
+                            <option value="ریاضیات">ریاضیات</option>
+                            <option value="فیزیک">فیزیک</option>
+                            <option value="شیمی">شیمی</option>
+                            <option value="زیست‌شناسی">زیست‌شناسی</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">تعداد کل سوالات:</label>
+                        <input type="number" class="form-control" id="total">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">تعداد پاسخ صحیح:</label>
+                        <input type="number" class="form-control" id="correct">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">تعداد پاسخ غلط:</label>
+                        <input type="number" class="form-control" id="wrong">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">ساعات مطالعه در هفته:</label>
+                        <input type="number" class="form-control" id="study-hours">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">تعداد تست‌های تمرینی در هفته:</label>
+                        <input type="number" class="form-control" id="practice">
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary px-4 mx-2" onclick="saveResult()">ثبت اطلاعات</button>
+                        <button class="btn btn-success px-4 mx-2" onclick="generateReport()">دریافت گزارش</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- منطقه نمایش وضعیت -->
+            <div id="notification-area" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// تعریف آرایه‌ای از دروس که در تمام اسکریپت استفاده می‌شود
+const subjects = ['ریاضیات', 'فیزیک', 'شیمی', 'زیست‌شناسی'];
+
+// تابع نمایش اعلان
+function showNotification(message, type = 'success') {
+    const notificationArea = document.getElementById('notification-area');
+    
+    const notification = document.createElement('div');
+    notification.classList.add('alert', `alert-${type}`, 'fade-in');
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        ${message}
+    `;
+    
+    notificationArea.appendChild(notification);
+    
+    // حذف خودکار اعلان بعد از 4 ثانیه
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s';
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 4000);
+}
+
+// تابع به‌روزرسانی نوار پیشرفت
+function updateProgress() {
+    let completed = 0;
+    
+    // بررسی ذخیره‌سازی محلی برای هر درس
+    subjects.forEach(subject => {
+        const saved = localStorage.getItem(`${subject}_saved`);
+        
+        if (saved === 'true') {
+            completed++;
+            document.getElementById(`subject_${subject}`).innerHTML = 
+                `<i class="fas fa-check-circle text-success"></i> ${subject}`;
+        } else {
+            document.getElementById(`subject_${subject}`).innerHTML = 
+                `<i class="fas fa-circle text-muted"></i> ${subject}`;
+        }
+    });
+    
+    const percentage = Math.round((completed / subjects.length) * 100);
+    
+    // به‌روزرسانی نوار پیشرفت
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = `${percentage}%`;
+    progressBar.textContent = `${percentage}%`;
+    progressBar.setAttribute('aria-valuenow', percentage);
+    
+    // تغییر رنگ بر اساس پیشرفت
+    if (percentage === 100) {
+        progressBar.classList.remove('bg-info', 'bg-warning');
+        progressBar.classList.add('bg-success');
+    } else if (percentage > 50) {
+        progressBar.classList.remove('bg-warning', 'bg-success');
+        progressBar.classList.add('bg-info');
+    } else {
+        progressBar.classList.remove('bg-info', 'bg-success');
+        progressBar.classList.add('bg-warning');
+    }
+}
+
+// تابع دریافت CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// محاسبه درصد با لحاظ کردن نمره منفی
+function calculatePercentage(correct, wrong, total) {
+    // هر پاسخ صحیح: 3 امتیاز
+    // هر پاسخ غلط: -1 امتیاز
+    // حداکثر امتیاز ممکن: total * 3
+    
+    const score = (correct * 3) - (wrong * 1);
+    const maxPossibleScore = total * 3;
+    
+    if (maxPossibleScore === 0) return 0;
+    
+    const percentage = (score / maxPossibleScore) * 100;
+    
+    // اگر درصد منفی شد، صفر برگردانیم
+    return Math.max(0, percentage);
+}
+
+// تابع ذخیره اطلاعات
+function saveResult() {
+    // بررسی اعتبار ورودی‌ها
+    const total = parseInt(document.getElementById('total').value);
+    const correct = parseInt(document.getElementById('correct').value);
+    const wrong = parseInt(document.getElementById('wrong').value);
+    const studyHours = parseFloat(document.getElementById('study-hours').value);
+    const practice = parseInt(document.getElementById('practice').value);
+    
+    if (isNaN(total) || isNaN(correct) || isNaN(wrong) || isNaN(studyHours) || isNaN(practice)) {
+        showNotification('لطفاً همه فیلدها را با اعداد معتبر پر کنید', 'danger');
+        return;
+    }
+    
+    if (correct + wrong > total) {
+        showNotification('مجموع پاسخ‌های صحیح و غلط نمی‌تواند از تعداد کل سوالات بیشتر باشد', 'danger');
+        return;
+    }
+    
+    // ارسال داده‌ها به سرور
+    fetch('/save-result/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            subject: document.getElementById('subject').value,
+            total: total,
+            correct: correct,
+            wrong: wrong,
+            study_hours: studyHours,
+            practice: practice,
+            blank: total - (correct + wrong),
+            percentage: calculatePercentage(correct, wrong, total)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // ذخیره وضعیت در localStorage
+            const subject = document.getElementById('subject').value;
+            localStorage.setItem(`${subject}_saved`, 'true');
+        
+            
+            // به‌روزرسانی نوار پیشرفت
+            updateProgress();
+            
+            // پاک کردن فیلدها
+            document.getElementById('total').value = '';
+            document.getElementById('correct').value = '';
+            document.getElementById('wrong').value = '';
+            document.getElementById('study-hours').value = '';
+            document.getElementById('practice').value = '';
+            
+            // اینجا alert را حذف کردیم
+        } else {
+            showNotification('خطا در ثبت اطلاعات', 'danger');
+        }
+    })
+    .catch(error => {
+        showNotification('خطا در ارتباط با سرور', 'danger');
+        console.error(error);
+    });
+}
+// تابع دریافت گزارش
+function generateReport() {
+    let allCompleted = true;
+    
+    // بررسی تکمیل همه دروس
+    subjects.forEach(subject => {
+        if (localStorage.getItem(`${subject}_saved`) !== 'true') {
+            allCompleted = false;
+        }
+    });
+    
+    if (!allCompleted) {
+        showNotification('لطفاً ابتدا اطلاعات همه دروس را وارد کنید', 'danger');
+        return;
+    }
+    
+    // دریافت گزارش
+    window.location.href = '/generate-report/';
+}
+
+// فراخوانی اولیه به‌روزرسانی پیشرفت
+document.addEventListener('DOMContentLoaded', function() {
+    // پاک کردن localStorage در هر بار بارگذاری صفحه
+    const subjects = ['ریاضیات', 'فیزیک', 'شیمی', 'زیست‌شناسی'];
+    subjects.forEach(subject => {
+        localStorage.removeItem(`${subject}_saved`);
+    });
+    
+    // به‌روزرسانی نوار پیشرفت
+    updateProgress();
+});
+</script>
+{% endblock %}

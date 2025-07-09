@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<!-- در بخش head فایل base.html، این استایل‌ها را اضافه کنید -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحلیلگر آزمون کنکور</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- استایل‌های جدید را اینجا اضافه کنید -->
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --light-bg: #f8f9fa;
+            --dark-bg: #212529;
+        }
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+            background-color: #f5f7ff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 12px 0;
+        }
+
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .container {
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .btn {
+            border-radius: 30px;
+            padding: 8px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        input.form-control, select.form-select {
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        input.form-control:focus, select.form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .form-label {
+            color: #505050;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        /* انیمیشن ظاهر شدن عناصر */
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+   <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">تحلیلگر کنکور</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+            </ul>
+        </div>
+    </div>
+   </nav>
+
+    <div class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+// تابع نمایش اعلان
+function showNotification(message, type = 'success') {
+    const notificationArea = document.getElementById('notification-area');
+    
+    const notification = document.createElement('div');
+    notification.classList.add('alert', `alert-${type}`, 'fade-in');
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        ${message}
+    `;
+    
+    notificationArea.appendChild(notification);
+    
+    // حذف خودکار اعلان بعد از 4 ثانیه
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s';
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 4000);
+}
+
+// تابع به‌روزرسانی نوار پیشرفت
+function updateProgress() {
+    const subjects = ['ریاضیات', 'فیزیک', 'شیمی', 'زیست‌شناسی'];
+    let completed = 0;
+    
+    // بررسی ذخیره‌سازی محلی برای هر درس
+    subjects.forEach(subject => {
+        if (localStorage.getItem(`${subject}_saved`) === 'true') {
+            completed++;
+            document.getElementById(`subject_${subject}`).innerHTML = 
+                `<i class="fas fa-check-circle text-success"></i> ${subject}`;
+        } else {
+            document.getElementById(`subject_${subject}`).innerHTML = 
+                `<i class="fas fa-circle text-muted"></i> ${subject}`;
+        }
+    });
+    
+    const percentage = Math.round((completed / subjects.length) * 100);
+    
+    // به‌روزرسانی نوار پیشرفت
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = `${percentage}%`;
+    progressBar.textContent = `${percentage}%`;
+    progressBar.setAttribute('aria-valuenow', percentage);
+    
+    // تغییر رنگ بر اساس پیشرفت
+    if (percentage === 100) {
+        progressBar.classList.remove('bg-info', 'bg-warning');
+        progressBar.classList.add('bg-success');
+    } else if (percentage > 50) {
+        progressBar.classList.remove('bg-warning', 'bg-success');
+        progressBar.classList.add('bg-info');
+    } else {
+        progressBar.classList.remove('bg-info', 'bg-success');
+        progressBar.classList.add('bg-warning');
+    }
+}
+
+// تابع ذخیره اطلاعات با به‌روزرسانی
+const originalSaveResult = saveResult;
+saveResult = function() {
+    // فراخوانی تابع ذخیره اصلی
+    const result = originalSaveResult();
+    
+    // ذخیره وضعیت در localStorage
+    const subject = document.getElementById('subject').value;
+    localStorage.setItem(`${subject}_saved`, 'true');
+    
+    // نمایش اعلان
+    showNotification(`اطلاعات درس ${subject} با موفقیت ذخیره شد`, 'success');
+    
+    // به‌روزرسانی نوار پیشرفت
+    updateProgress();
+    
+    return result;
+};
+
+// فراخوانی اولیه به‌روزرسانی پیشرفت
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+});
+</script>
+</body>
+</html>
